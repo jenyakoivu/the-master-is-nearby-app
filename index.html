@@ -6,15 +6,20 @@
 <title>Мои заявки — Техник Рядом</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+  /* Цвета берём из темы Telegram, с запасными значениями для светлой темы */
   :root {
-    --bg: #0f1820; --card: #18242e; --card-edge: #223340;
-    --ink: #eaf2f7; --ink-dim: #8aa0ad; --accent: #2bb6a8;
-    --accent-warm: #f5a623; --green: #34c759; --red: #ff6b5e; --radius: 18px;
-  }
-  body.tg-theme {
-    --bg: var(--tg-theme-bg-color, #0f1820);
-    --ink: var(--tg-theme-text-color, #eaf2f7);
-    --ink-dim: var(--tg-theme-hint-color, #8aa0ad);
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --card: var(--tg-theme-secondary-bg-color, #f1f3f5);
+    --ink: var(--tg-theme-text-color, #1a1a1a);
+    --ink-dim: var(--tg-theme-hint-color, #8a9aa5);
+    --accent: var(--tg-theme-button-color, #2bb6a8);
+    --accent-ink: var(--tg-theme-button-text-color, #ffffff);
+    --link: var(--tg-theme-link-color, #2b8ab6);
+    --green: #1a9d4f;
+    --orange: #d98a00;
+    --red: #d83a2e;
+    --edge: rgba(128,128,128,.22);
+    --radius: 18px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -25,61 +30,64 @@
   .head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
   .head .logo {
     width: 44px; height: 44px; border-radius: 13px;
-    background: linear-gradient(135deg, var(--accent), #1c8a80);
+    background: linear-gradient(135deg, #2bb6a8, #1c8a80);
     display: grid; place-items: center; font-size: 22px;
-    box-shadow: 0 6px 18px rgba(43,182,168,.35); flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(43,182,168,.3); flex-shrink: 0;
   }
-  .head h1 { font-size: 19px; font-weight: 700; letter-spacing: -.3px; }
+  .head h1 { font-size: 19px; font-weight: 700; letter-spacing: -.3px; color: var(--ink); }
   .head p { font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
   .back {
-    background: none; border: none; color: var(--accent); font-size: 15px;
-    cursor: pointer; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--link); font-size: 16px;
+    cursor: pointer; padding: 6px 0; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;
   }
   .count { font-size: 13px; color: var(--ink-dim); margin: 0 4px 12px; }
   .card {
-    background: var(--card); border: 1px solid var(--card-edge);
-    border-radius: var(--radius); padding: 15px 15px 13px; margin-bottom: 12px;
+    background: var(--card); border: 1px solid var(--edge);
+    border-radius: var(--radius); padding: 15px 44px 14px 18px; margin-bottom: 12px;
     position: relative; overflow: hidden; cursor: pointer;
     animation: drop .4s ease both; transition: transform .12s;
   }
   .card:active { transform: scale(.985); }
-  .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
   .card.new::before { background: var(--green); }
-  .card.taken::before { background: var(--accent-warm); }
-  .card .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; }
-  .card .num { font-size: 14px; font-weight: 700; }
-  .badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
-  .badge.new { background: rgba(52,199,89,.15); color: var(--green); }
-  .badge.taken { background: rgba(245,166,35,.15); color: var(--accent-warm); }
+  .card.taken::before { background: var(--orange); }
+  .card .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 9px; }
+  .card .num { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .badge { font-size: 11px; font-weight: 700; padding: 5px 11px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .badge.new { background: rgba(26,157,79,.16); color: var(--green); }
+  .badge.taken { background: rgba(217,138,0,.18); color: var(--orange); }
   .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .problem { font-size: 16px; font-weight: 600; margin-bottom: 9px; line-height: 1.3; }
+  .problem { font-size: 16px; font-weight: 600; margin-bottom: 9px; line-height: 1.3; color: var(--ink); }
   .meta { display: flex; flex-direction: column; gap: 5px; }
-  .meta .row { display: flex; gap: 8px; font-size: 13px; color: var(--ink-dim); align-items: flex-start; }
-  .meta .row .i { width: 16px; text-align: center; flex-shrink: 0; }
-  .chev { position: absolute; right: 14px; bottom: 13px; color: var(--ink-dim); font-size: 18px; }
+  .meta .row { display: flex; gap: 8px; font-size: 14px; color: var(--ink-dim); align-items: flex-start; }
+  .meta .row .i { width: 18px; text-align: center; flex-shrink: 0; }
+  .chev {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-dim); font-size: 30px; font-weight: 300; line-height: 1; opacity: .7;
+  }
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 12px; color: var(--ink-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .4px; }
-  .field .val { font-size: 16px; font-weight: 500; }
+  .field .val { font-size: 16px; font-weight: 500; color: var(--ink); }
   .field input, .field select, .field textarea {
-    width: 100%; background: var(--card); border: 1px solid var(--card-edge);
+    width: 100%; background: var(--card); border: 1px solid var(--edge);
     border-radius: 12px; padding: 12px 14px; color: var(--ink); font-size: 16px;
     font-family: inherit; outline: none;
   }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
-  .field input:disabled, .field select:disabled, .field textarea:disabled { opacity: .5; }
+  .field input:disabled, .field select:disabled, .field textarea:disabled { opacity: .45; }
   .field textarea { resize: vertical; min-height: 70px; }
   .locked { font-size: 11px; color: var(--ink-dim); margin-top: 5px; }
   .btn {
-    width: 100%; border: none; border-radius: 13px; padding: 14px;
-    font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 8px;
+    width: 100%; border: none; border-radius: 13px; padding: 15px;
+    font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px;
   }
-  .btn.primary { background: var(--accent); color: #04201d; }
-  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--card-edge); }
-  .btn.danger { background: transparent; color: var(--red); border: 1px solid rgba(255,107,94,.4); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn.danger { background: transparent; color: var(--red); border: 1.5px solid rgba(216,58,46,.5); }
   .btn:active { opacity: .8; }
   .state { text-align: center; padding: 60px 20px; color: var(--ink-dim); }
   .state .ico { font-size: 48px; margin-bottom: 14px; }
-  .hint { font-size: 13px; color: var(--ink-dim); margin: -4px 4px 16px; line-height: 1.4; }
+  .hint { font-size: 13px; color: var(--ink-dim); margin: -2px 4px 16px; line-height: 1.4; }
   @keyframes drop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
@@ -87,7 +95,7 @@
   <div id="app"></div>
 <script>
   const tg = window.Telegram ? window.Telegram.WebApp : null;
-  if (tg) { tg.ready(); tg.expand(); document.body.classList.add("tg-theme"); }
+  if (tg) { tg.ready(); tg.expand(); }
   const API = "https://138.124.54.85.nip.io/api";
   const initData = tg ? tg.initData : "";
   const statusText = { new: "Ищем мастера", taken: "Мастер найден" };
@@ -105,7 +113,6 @@
     if(!r.ok) throw new Error(r.status);
     return r.json();
   }
-
   async function loadList(){
     if(!initData){ state("🔒","Откройте страницу через кнопку в боте."); return; }
     state("⏳","Загружаем заявки…");
@@ -115,7 +122,6 @@
       renderList();
     } catch(e){ state("⚠️","Нет связи с сервером. Попробуйте позже."); }
   }
-
   function renderList(){
     if(!cache.length){ state("📭","У вас пока нет активных заявок.<br>Оставьте заявку в боте 🚿"); return; }
     app.innerHTML = header("Мои заявки") +
@@ -134,7 +140,6 @@
           <span class="chev">›</span>\
         </div>').join("");
   }
-
   window.openDetails = function(id){
     const r = cache.find(x => x.id === id);
     if(!r) return;
@@ -149,7 +154,6 @@
       '<button class="btn ghost" onclick="openEdit('+r.id+')">✏️ Редактировать</button>'+
       '<button class="btn danger" onclick="doDelete('+r.id+')">🗑 Удалить заявку</button>';
   };
-
   window.openEdit = function(id){
     const r = cache.find(x => x.id === id);
     if(!r) return;
@@ -168,7 +172,6 @@
       '<div class="field"><label>Телефон</label><input id="f_phone" value="'+esc(r.phone)+'"></div>'+
       '<button class="btn primary" id="saveBtn" onclick="doSave('+r.id+', '+taken+')">Сохранить</button>';
   };
-
   window.doSave = async function(id, taken){
     const btn = document.getElementById("saveBtn");
     btn.textContent = "Сохраняем…"; btn.disabled = true;
@@ -183,7 +186,6 @@
       openDetails(id);
     } catch(e){ btn.textContent = "Ошибка, попробуйте снова"; btn.disabled = false; }
   };
-
   window.doDelete = async function(id){
     const ok = (tg && tg.showConfirm)
       ? await new Promise(res => tg.showConfirm("Удалить заявку №"+id+"?", res))
@@ -196,7 +198,6 @@
       renderList();
     } catch(e){ alert("Не удалось удалить. Попробуйте позже."); }
   };
-
   function val(id){ return document.getElementById(id).value.trim(); }
   loadList();
 </script>
