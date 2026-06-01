@@ -107,7 +107,7 @@
 
   function contactRows(r){
     let h='';
-    if(r.phone){ h+='<div class="row"><span class="i">📱</span><a href="tel:'+esc(r.phone)+'">'+esc(r.phone)+'</a></div>'; }
+    if(r.phone){ h+='<div class="row"><span class="i">📞</span><a href="tel:'+esc(r.phone)+'">'+esc(r.phone)+'</a></div>'; }
     if(r.username){ h+='<div class="row"><span class="i">👤</span><a href="https://t.me/'+esc(r.username)+'">@'+esc(r.username)+'</a></div>'; }
     else if(r.full_name){ h+='<div class="row"><span class="i">👤</span>'+esc(r.full_name)+'</div>'; }
     return h;
@@ -145,7 +145,7 @@
         <div class="actions"><button class="btn done" onclick="act('+r.id+',\'complete\')">✅ Выполнено</button>\
         <button class="btn release" onclick="act('+r.id+',\'release\')">🔄 Передать</button></div></div>').join("");
       h+='<div class="sub">История ('+d.history.length+')</div>';
-      if(!d.history.length){ h+='<div class="state" style="padding:24px"><div class="ico">📚</div>История пуста.</div>'; }
+      if(!d.history.length){ h+='<div class="state" style="padding:24px"><div class="ico">📁</div>История пуста.</div>'; }
       else {
         h+=d.history.map(r=>'<div class="card '+r.status+'">'+cardHead(r)+'<div class="meta">'+baseRows(r)+'</div></div>').join("");
         h+='<button class="btn-clear" onclick="clearHistory()">🗑 Очистить историю</button>';
