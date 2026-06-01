@@ -110,7 +110,7 @@
 
   const API = "https://138.124.54.85.nip.io/api";
   const initData = tg ? tg.initData : "";
-  const statusText = { new: "Ищем мастера", taken: "Мастер найден" };
+  const statusText = { new: "Ищем мастера", taken: "Мастер найден", done: "Выполнена", canceled: "Отменена" };
   const DISTRICTS = ["Индустриальный","Северный","Заягорбский","Зашекснинский","Пригород"];
   const URGENCIES = ["Срочно — авария","Сегодня","В ближайшие дни"];
   let cache = [];
@@ -152,23 +152,30 @@
           </div>\
           <div class="problem">'+esc(r.problem)+'</div>\
           <div class="meta">\
-            <div class="row"><span class="i">📍</span><span>'+esc(r.district)+', '+esc(r.address)+'</span></div>\
-            <div class="row"><span class="i">⏱</span><span>'+esc(r.urgency)+'</span></div>\
+            <div class="row"><span class="i">📍</span><span>— '+esc(r.district)+', '+esc(r.address)+'</span></div>\
+            <div class="row"><span class="i">⏱</span><span>— '+esc(r.urgency)+'</span></div>\
           </div>\
           <span class="chev">›</span>\
         </div>').join("");
+  }
+  function statusLabel(r){
+    if(r.status==="taken") return "✅ Нашли для вас мастера";
+    if(r.status==="done") return "🏁 Заявка выполнена";
+    if(r.status==="canceled") return "❌ Отменена";
+    if(r.released_once) return "🔄🔍 Снова ищем мастера";
+    return "🔍 Ищем мастера";
   }
   window.openDetails = function(id){
     const r = cache.find(x => x.id === id);
     if(!r) return;
     app.innerHTML = header("Заявка №" + r.id) +
       '<button class="back" onclick="renderList()">‹ Назад</button>'+
-      '<div class="field"><label>Статус</label><div class="val">'+(r.status==="taken"?"🔧 Мастер найден":"🟢 Ищем мастера")+'</div></div>'+
+      '<div class="field"><label>Статус</label><div class="val">'+statusLabel(r)+'</div></div>'+
       '<div class="field"><label>Проблема</label><div class="val">'+esc(r.problem)+'</div></div>'+
       '<div class="field"><label>Район</label><div class="val">'+esc(r.district)+'</div></div>'+
       '<div class="field"><label>Адрес</label><div class="val">'+esc(r.address)+'</div></div>'+
       '<div class="field"><label>Срочность</label><div class="val">'+esc(r.urgency)+'</div></div>'+
-      '<div class="field"><label>Телефон</label><div class="val">'+esc(r.phone)+'</div></div>'+
+      '<div class="field"><label>Телефон</label><div class="val">'+esc(r.phone_show||r.phone)+'</div></div>'+
       '<button class="btn ghost" onclick="openEdit('+r.id+')">✏️ Редактировать</button>'+
       '<button class="btn danger" onclick="doDelete('+r.id+')">🗑 Удалить заявку</button>';
   };
