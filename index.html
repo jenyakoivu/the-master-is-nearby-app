@@ -123,8 +123,14 @@
     } catch(e){ state("⚠️","Нет связи с сервером. Попробуйте позже."); }
   }
   function renderList(){
-    if(!cache.length){ state("📭","У вас пока нет активных заявок.<br>Оставьте заявку в боте 🚿"); return; }
+    if(!cache.length){
+      app.innerHTML = header("Мои заявки") +
+        '<div class="state"><div class="ico">📭</div>У вас пока нет заявок.</div>' +
+        '<button class="btn primary" onclick="openCreate()">➕ Оставить заявку</button>';
+      return;
+    }
     app.innerHTML = header("Мои заявки") +
+      '<button class="btn primary" style="margin:0 0 14px" onclick="openCreate()">➕ Новая заявка</button>' +
       '<div class="count">Активных заявок: '+cache.length+'</div>' +
       cache.map(r => '\
         <div class="card '+r.status+'" onclick="openDetails('+r.id+')">\
@@ -198,6 +204,36 @@
       renderList();
     } catch(e){ alert("Не удалось удалить. Попробуйте позже."); }
   };
+  window.openCreate = function(){
+    app.innerHTML = header("Новая заявка") +
+      '<button class="back" onclick="renderList()">‹ Назад</button>'+
+      '<div class="field"><label>Что случилось?</label><textarea id="c_problem" placeholder="Например: течёт труба под раковиной"></textarea></div>'+
+      '<div class="field"><label>Район</label><select id="c_district">'+
+        DISTRICTS.map(d=>'<option>'+d+'</option>').join("")+'</select></div>'+
+      '<div class="field"><label>Адрес</label><input id="c_address" placeholder="улица, дом, квартира"></div>'+
+      '<div class="field"><label>Срочность</label><select id="c_urgency">'+
+        URGENCIES.map(u=>'<option>'+u+'</option>').join("")+'</select></div>'+
+      '<div class="field"><label>Телефон</label><input id="c_phone" placeholder="+7 999 123-45-67" inputmode="tel"></div>'+
+      '<button class="btn primary" id="createBtn" onclick="doCreate()">Отправить заявку</button>';
+  };
+
+  window.doCreate = async function(){
+    const problem = val("c_problem"), district = val("c_district"),
+          address = val("c_address"), urgency = val("c_urgency"), phone = val("c_phone");
+    const digits = phone.replace(/\D/g, "");
+    if(problem.length < 3){ if(tg) tg.showAlert("Опишите проблему подробнее."); return; }
+    if(address.length < 3){ if(tg) tg.showAlert("Укажите адрес."); return; }
+    if(digits.length < 10){ if(tg) tg.showAlert("Введите корректный телефон."); return; }
+    const btn = document.getElementById("createBtn");
+    btn.textContent = "Отправляем…"; btn.disabled = true;
+    try {
+      await api("/create", { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ initData, problem, district, address, urgency, phone }) });
+      if(tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+      await loadList();
+    } catch(e){ btn.textContent = "Ошибка, попробуйте снова"; btn.disabled = false; }
+  };
+
   function val(id){ return document.getElementById(id).value.trim(); }
   loadList();
 </script>
