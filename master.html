@@ -107,14 +107,14 @@
 
   function contactRows(r){
     let h='';
-    if(r.phone){ h+='<div class="row"><span class="i">📞</span><a href="tel:'+esc(r.phone)+'">'+esc(r.phone)+'</a></div>'; }
-    if(r.username){ h+='<div class="row"><span class="i">👤</span><a href="https://t.me/'+esc(r.username)+'">@'+esc(r.username)+'</a></div>'; }
-    else if(r.full_name){ h+='<div class="row"><span class="i">👤</span>'+esc(r.full_name)+'</div>'; }
+    if(r.phone){ h+='<div class="row"><span class="i">📞</span>— <a href="tel:'+esc(r.phone_dial||r.phone)+'">'+esc(r.phone)+'</a></div>'; }
+    if(r.username){ h+='<div class="row"><span class="i">👤</span>— <a href="https://t.me/'+esc(r.username)+'">@'+esc(r.username)+'</a></div>'; }
+    else if(r.full_name){ h+='<div class="row"><span class="i">👤</span>— '+esc(r.full_name)+'</div>'; }
     return h;
   }
   function baseRows(r){
-    return '<div class="row"><span class="i">📍</span><span>'+esc(r.district)+', '+esc(r.address)+'</span></div>'+
-           '<div class="row"><span class="i">⏱</span><span>'+esc(r.urgency)+'</span></div>';
+    return '<div class="row"><span class="i">📍</span><span>— '+esc(r.district)+', '+esc(r.address)+'</span></div>'+
+           '<div class="row"><span class="i">⏱</span><span>— '+esc(r.urgency)+'</span></div>';
   }
   function cardHead(r){
     return '<div class="top"><span class="num">Заявка №'+r.id+'</span>'+
