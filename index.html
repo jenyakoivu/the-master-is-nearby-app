@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Мои заявки — Техник Рядом</title>
+<title>Мои заявки — Мастер Рядом</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   /* Цвета берём из темы Telegram, с запасными значениями для светлой темы */
@@ -117,7 +117,7 @@
   const app = document.getElementById("app");
 
   function esc(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-  function header(sub){ return '<div class="head"><div class="logo">👷</div><div><h1>Техник Рядом</h1><p>'+sub+'</p></div></div>'; }
+  function header(sub){ return '<div class="head"><div class="logo">👷</div><div><h1>Мастер Рядом</h1><p>'+sub+'</p></div></div>'; }
   function state(ico, txt){ app.innerHTML = header("Мои заявки") + '<div class="state"><div class="ico">'+ico+'</div>'+txt+'</div>'; }
 
   async function api(path, opts){
