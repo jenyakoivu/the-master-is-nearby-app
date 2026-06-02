@@ -117,6 +117,19 @@
   // Инициализация VK Bridge (нужно для мобильных)
   if (window.vkBridge) { try { vkBridge.send("VKWebAppInit", {}); } catch(e){} }
 
+  // Запрос разрешения на сообщения от сообщества (чтобы приходили уведомления)
+  const GROUP_ID = 239163563;
+  async function askMessagesPermission(){
+    if(!window.vkBridge) return;
+    try {
+      const res = await vkBridge.send("VKWebAppAllowMessagesFromGroup", { group_id: GROUP_ID });
+      if(res && res.result){
+        // сообщаем серверу, что разрешено
+        try { await api("/allow",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sign_params:SIGN, allowed:true})}); } catch(e){}
+      }
+    } catch(e){ /* пользователь отказал — не настаиваем */ }
+  }
+
   // Тап по пустому месту убирает клавиатуру
   document.addEventListener("pointerdown", function(e){
     const t = e.target;
@@ -130,6 +143,7 @@
 
   async function boot(){
     if(!SIGN){ st("🔒","Откройте приложение внутри ВКонтакте."); return; }
+    askMessagesPermission();  // сразу просим разрешение на уведомления
     try {
       const me = await api(withSign("/me"));
       role = me.role;
