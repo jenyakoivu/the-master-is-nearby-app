@@ -52,6 +52,7 @@
   .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
   .card.new::before { background: var(--green); }
   .card.taken::before { background: var(--orange); }
+  .card.urgent::before { background: #e64646; }
   .card.done::before { background: var(--blue); }
   .card.canceled::before { background: var(--red); }
   .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -103,7 +104,7 @@
   const app = document.getElementById("app");
 
   const DISTRICTS = ["Индустриальный","Северный","Заягорбский","Зашекснинский","Пригород"];
-  const URGENCIES = ["Срочно — авария","Сегодня","В ближайшие дни"];
+  const URGENCIES = ["Срочно","Сегодня","В ближайшие дни"];
 
   let role = "client";       // client | master | admin
   let viewAs = "client";     // для админа: что смотрим
@@ -182,7 +183,7 @@
     if(r.status==="taken") return "✅ Нашли для вас мастера";
     if(r.status==="done") return "🏁 Заявка выполнена";
     if(r.status==="canceled") return "❌ Отменена";
-    if(r.released_once) return "🔄🔍 Снова ищем мастера";
+    if(r.released_once) return "🔍 Ищем другого мастера";
     return "🔍 Ищем мастера";
   }
   async function renderClient(inner){
@@ -196,7 +197,7 @@
   }
   function clientBadge(r){
     if(r.status==="taken") return '<span class="badge taken">Нашли мастера</span>';
-    if(r.released_once) return '<span class="badge new">Снова ищем</span>';
+    if(r.released_once) return '<span class="badge new">Ищем другого</span>';
     return '<span class="badge new">Ищем мастера</span>';
   }
   function drawClientList(inner){
@@ -343,13 +344,18 @@
     if(window.vkBridge){ try { vkBridge.send("VKWebAppShowSnackbar",{text:"Номер скопирован: "+num}); return; } catch(e){} }
     alert("Номер скопирован: " + num);
   }
+  function vkCardClass(r){
+    var c = r.status;
+    if((r.urgency||"").indexOf("Срочно") === 0) c += " urgent";
+    return c;
+  }
   function mHead(r){ return '<div class="top"><span class="num">Заявка №'+r.id+'</span>'+
     '<span class="badge '+r.status+'">'+(mStatusBadge[r.status]||r.status)+'</span></div><div class="problem">'+esc(r.problem)+'</div>'; }
   async function mLoadBoard(){
     try {
       const d = await api(withSign("/m/board"));
       if(!d.requests.length){ mc().innerHTML='<div class="state"><div class="ico">📭</div>Свободных заявок нет.</div>'; return; }
-      mc().innerHTML = d.requests.map(r=>'<div class="card '+r.status+'">'+mHead(r)+'<div class="meta">'+mBaseRows(r)+'</div>'+
+      mc().innerHTML = d.requests.map(r=>'<div class="card '+vkCardClass(r)+'">'+mHead(r)+'<div class="meta">'+mBaseRows(r)+'</div>'+
         '<div class="actions"><button class="btn take" onclick="mAct('+r.id+',\'take\')">✋ Взять в работу</button></div></div>').join("");
     } catch(e){ mc().innerHTML='<div class="state"><div class="ico">⚠️</div>Нет связи.</div>'; }
   }
@@ -358,12 +364,12 @@
       const d = await api(withSign("/m/mine"));
       let h='<div class="sub">В работе ('+d.active.length+')</div>';
       if(!d.active.length) h+='<div class="state" style="padding:24px"><div class="ico">🔧</div>Нет заявок в работе.</div>';
-      else h+=d.active.map(r=>'<div class="card '+r.status+'">'+mHead(r)+'<div class="meta">'+mBaseRows(r)+mContact(r)+'</div>'+
+      else h+=d.active.map(r=>'<div class="card '+vkCardClass(r)+'">'+mHead(r)+'<div class="meta">'+mBaseRows(r)+mContact(r)+'</div>'+
         '<div class="actions"><button class="btn done" onclick="mAct('+r.id+',\'complete\')">✅ Выполнено</button>'+
         '<button class="btn release" onclick="mAct('+r.id+',\'release\')">🔄 Передать</button></div></div>').join("");
       h+='<div class="sub">История ('+d.history.length+')</div>';
       if(!d.history.length) h+='<div class="state" style="padding:24px"><div class="ico">📁</div>История пуста.</div>';
-      else { h+=d.history.map(r=>'<div class="card '+r.status+'">'+mHead(r)+'<div class="meta">'+mBaseRows(r)+'</div></div>').join("");
+      else { h+=d.history.map(r=>'<div class="card '+vkCardClass(r)+'">'+mHead(r)+'<div class="meta">'+mBaseRows(r)+'</div></div>').join("");
         h+='<button class="btn-clear" onclick="mClear()">🗑 Очистить историю</button>'; }
       mc().innerHTML=h;
     } catch(e){ mc().innerHTML='<div class="state"><div class="ico">⚠️</div>Нет связи.</div>'; }
