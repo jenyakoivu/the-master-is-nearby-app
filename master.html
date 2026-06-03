@@ -107,17 +107,34 @@
 
   function contactRows(r){
     let h='';
+    if(r.client_photo){ h+='<div class="row" style="align-items:center"><img src="'+esc(r.client_photo)+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-right:4px"><b>'+esc(r.client_name||"Клиент")+'</b></div>'; }
+    else if(r.client_name){ h+='<div class="row"><span class="i">👤</span>— '+esc(r.client_name)+'</div>'; }
     if(r.phone){ h+='<div class="row"><span class="i">📞</span>— <a href="#" onclick="callPhone(\''+esc(r.phone_dial||r.phone)+'\');return false;">'+esc(r.phone)+'</a></div>'; }
     var link = r.client_link || (r.username ? "https://t.me/"+r.username : "");
-    var label = r.client_label || (r.username ? "@"+r.username : (r.full_name||""));
-    if(link){ h+='<div class="row"><span class="i">👤</span>— <a href="#" onclick="openProfile(\''+esc(link)+'\');return false;">'+esc(label)+'</a></div>'; }
-    else if(label){ h+='<div class="row"><span class="i">👤</span>— '+esc(label)+'</div>'; }
+    var label = r.client_label || (r.username ? "@"+r.username : "");
+    if(link){ h+='<div class="row"><span class="i">🔗</span>— <a href="#" onclick="openProfile(\''+esc(link)+'\');return false;">'+esc(label)+'</a></div>'; }
     return h;
   }
   function callPhone(num){
-    // В Telegram WebView обычная ссылка tel: не срабатывает — открываем через API
-    if(tg && tg.openLink){ tg.openLink("tel:"+num); }
-    else { window.location.href = "tel:"+num; }
+    // В Telegram WebView звонилка из мини-аппа часто не открывается (баг Telegram).
+    // Надёжно: копируем номер, показываем подтверждение, и пробуем открыть звонилку.
+    var copied = false;
+    try {
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(num); copied = true;
+      }
+    } catch(e){}
+    if(!copied){
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = num; document.body.appendChild(ta); ta.select();
+        document.execCommand("copy"); document.body.removeChild(ta); copied = true;
+      } catch(e){}
+    }
+    // пробуем открыть звонилку (вдруг устройство поддержит)
+    try { window.location.href = "tel:" + num; } catch(e){}
+    if(tg && tg.showAlert){ tg.showAlert("Номер скопирован: " + num); }
+    else if(copied){ alert("Номер скопирован: " + num); }
   }
   function openProfile(url){
     if(tg && tg.openLink){ tg.openLink(url); }
