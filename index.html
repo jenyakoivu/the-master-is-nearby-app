@@ -112,7 +112,7 @@
   const initData = tg ? tg.initData : "";
   const statusText = { new: "Ищем мастера", taken: "Мастер найден", done: "Выполнена", canceled: "Отменена" };
   const DISTRICTS = ["Индустриальный","Северный","Заягорбский","Зашекснинский","Пригород"];
-  const URGENCIES = ["Срочно — авария","Сегодня","В ближайшие дни"];
+  const URGENCIES = ["Срочно","Сегодня","В ближайшие дни"];
   let cache = [];
   const app = document.getElementById("app");
 
@@ -162,7 +162,7 @@
     if(r.status==="taken") return "✅ Нашли для вас мастера";
     if(r.status==="done") return "🏁 Заявка выполнена";
     if(r.status==="canceled") return "❌ Отменена";
-    if(r.released_once) return "🔄🔍 Снова ищем мастера";
+    if(r.released_once) return "🔍 Ищем другого мастера";
     return "🔍 Ищем мастера";
   }
   window.openDetails = function(id){
