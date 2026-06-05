@@ -129,17 +129,42 @@
   // Инициализация VK Bridge (нужно для мобильных)
   if (window.vkBridge) { try { vkBridge.send("VKWebAppInit", {}); } catch(e){} }
 
-  // Запрос разрешения на сообщения от сообщества (чтобы приходили уведомления)
+  // Запрос разрешения на сообщения от сообщества — ТОЛЬКО по действию пользователя
   const GROUP_ID = 239163563;
+  let msgAllowed = false;
   async function askMessagesPermission(){
-    if(!window.vkBridge) return;
+    if(!window.vkBridge) return false;
     try {
       const res = await vkBridge.send("VKWebAppAllowMessagesFromGroup", { group_id: GROUP_ID });
       if(res && res.result){
-        // сообщаем серверу, что разрешено
+        msgAllowed = true;
         try { await api("/allow",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sign_params:SIGN, allowed:true})}); } catch(e){}
+        snackbar("Уведомления о заявке включены");
+        return true;
       }
     } catch(e){ /* пользователь отказал — не настаиваем */ }
+    return false;
+  }
+  // Родное ВК-уведомление вместо браузерного alert
+  function snackbar(text){
+    if(window.vkBridge){ try { vkBridge.send("VKWebAppShowSnackbar",{text:text}); return; } catch(e){} }
+  }
+  // Подтверждение внутри интерфейса (вместо браузерного confirm)
+  function vkConfirm(text){
+    return new Promise(function(resolve){
+      var ov = document.createElement("div");
+      ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px";
+      var box = document.createElement("div");
+      box.style.cssText = "background:var(--card);border-radius:16px;padding:20px;max-width:320px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.25)";
+      box.innerHTML = '<div style="font-size:15px;margin-bottom:18px;color:var(--ink)">'+text+'</div>';
+      var yes = document.createElement("button");
+      yes.textContent = "Да"; yes.style.cssText = "width:100%;padding:12px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;margin-bottom:8px;cursor:pointer";
+      var no = document.createElement("button");
+      no.textContent = "Отмена"; no.style.cssText = "width:100%;padding:12px;border:1.5px solid var(--edge);border-radius:10px;background:transparent;color:var(--ink-dim);font-size:15px;cursor:pointer";
+      box.appendChild(yes); box.appendChild(no); ov.appendChild(box); document.body.appendChild(ov);
+      yes.onclick = function(){ document.body.removeChild(ov); resolve(true); };
+      no.onclick = function(){ document.body.removeChild(ov); resolve(false); };
+    });
   }
 
   // Тап по пустому месту убирает клавиатуру
@@ -155,7 +180,6 @@
 
   async function boot(){
     if(!SIGN){ st("🔒","Откройте приложение внутри ВКонтакте."); return; }
-    askMessagesPermission();  // сразу просим разрешение на уведомления
     fetchVkUser();            // получаем фото и имя для показа мастеру
     try {
       const me = await api(withSign("/me"));
@@ -241,6 +265,7 @@
       '<div class="field"><label>Адрес</label><input id="c_address" placeholder="улица, дом, квартира"></div>'+
       '<div class="field"><label>Срочность</label><select id="c_urgency">'+URGENCIES.map(u=>'<option>'+u+'</option>').join("")+'</select></div>'+
       '<div class="field"><label>Телефон</label><input id="c_phone" placeholder="+7 999 123-45-67" inputmode="tel" oninput="maskPhone(this)"></div>'+
+      '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-dim);margin-bottom:14px;cursor:pointer"><input type="checkbox" id="c_consent" style="margin-top:2px;width:auto"> <span>Я согласен(на) на обработку моих данных (имя, телефон, заявка) для передачи мастеру и принимаю <a href="https://jenyakoivu.github.io/the-master-is-nearby-app/privacy.html" target="_blank" style="color:var(--accent)">политику конфиденциальности</a></span></label>'+
       '<button class="btn primary" id="cCreateBtn" onclick="cCreate('+(inner?1:0)+')">Отправить заявку</button>';
   };
 
@@ -264,13 +289,17 @@
   window.cCreate = async function(inner){
     const problem=v("c_problem"), district=v("c_district"), address=v("c_address"), urgency=v("c_urgency"), phone=v("c_phone");
     const digits = phone.replace(/\D/g,"");
-    if(problem.length<3){ alert("Опишите проблему подробнее."); return; }
-    if(address.length<3){ alert("Укажите адрес."); return; }
-    if(digits.length<10){ alert("Введите корректный телефон."); return; }
+    if(problem.length<3){ snackbar("Опишите проблему подробнее"); return; }
+    if(address.length<3){ snackbar("Укажите адрес"); return; }
+    if(digits.length<10){ snackbar("Введите корректный телефон"); return; }
+    const consent = document.getElementById("c_consent");
+    if(!consent || !consent.checked){ snackbar("Подтвердите согласие на обработку данных"); return; }
     const btn=document.getElementById("cCreateBtn"); btn.textContent="Отправляем…"; btn.disabled=true;
     try {
       await api("/create",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({sign_params:SIGN, problem, district, address, urgency, phone, photo:vkUser.photo, name:vkUser.name})});
+      // После отправки предлагаем включить уведомления (по действию пользователя)
+      if(!msgAllowed){ await askMessagesPermission(); }
       await renderClient(inner);
     } catch(e){ btn.textContent="Ошибка, попробуйте снова"; btn.disabled=false; }
   };
@@ -299,12 +328,12 @@
     } catch(e){ btn.textContent="Ошибка, попробуйте снова"; btn.disabled=false; }
   };
   window.cDelete = async function(id, inner){
-    if(!confirm("Удалить заявку №"+id+"?")) return;
+    if(!(await vkConfirm("Удалить заявку №"+id+"?"))) return;
     try {
       await api("/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sign_params:SIGN,id})});
       clientCache = clientCache.filter(x=>x.id!==id);
       drawClientList(inner);
-    } catch(e){ alert("Не удалось удалить."); }
+    } catch(e){ snackbar("Не удалось удалить"); }
   };
 
   // ================= МАСТЕР =================
@@ -342,7 +371,7 @@
     if(!copied){ try { var ta=document.createElement("textarea"); ta.value=num; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); copied=true; } catch(e){} }
     try { window.location.href = "tel:" + num; } catch(e){}
     if(window.vkBridge){ try { vkBridge.send("VKWebAppShowSnackbar",{text:"Номер скопирован: "+num}); return; } catch(e){} }
-    alert("Номер скопирован: " + num);
+    snackbar("Номер скопирован: " + num);
   }
   function vkCardClass(r){
     var c = r.status;
@@ -375,18 +404,18 @@
     } catch(e){ mc().innerHTML='<div class="state"><div class="ico">⚠️</div>Нет связи.</div>'; }
   }
   window.mAct = async function(id, action){
-    if(action==="release" && !confirm("Передать заявку №"+id+" другим мастерам?")) return;
+    if(action==="release" && !(await vkConfirm("Передать заявку №"+id+" другим мастерам?"))) return;
     try {
       await api("/m/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sign_params:SIGN,id,action})});
       if(mTab==="board") mLoadBoard(); else mLoadMine();
-    } catch(e){ alert("Не удалось выполнить действие."); }
+    } catch(e){ snackbar("Не удалось выполнить действие"); }
   };
   window.mClear = async function(){
-    if(!confirm("Вы уверены? История будет очищена.")) return;
+    if(!(await vkConfirm("Очистить историю?"))) return;
     try {
       await api("/m/clear_history",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sign_params:SIGN})});
       mLoadMine();
-    } catch(e){ alert("Не удалось очистить."); }
+    } catch(e){ snackbar("Не удалось очистить"); }
   };
 
   boot();
