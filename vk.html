@@ -265,7 +265,7 @@
       '<div class="field"><label>Адрес</label><input id="c_address" placeholder="улица, дом, квартира"></div>'+
       '<div class="field"><label>Срочность</label><select id="c_urgency">'+URGENCIES.map(u=>'<option>'+u+'</option>').join("")+'</select></div>'+
       '<div class="field"><label>Телефон</label><input id="c_phone" placeholder="+7 999 123-45-67" inputmode="tel" oninput="maskPhone(this)"></div>'+
-      '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-dim);margin-bottom:14px;cursor:pointer"><input type="checkbox" id="c_consent" style="margin-top:2px;width:auto"> <span>Я согласен(на) на обработку моих данных (имя, телефон, заявка) для передачи мастеру и принимаю <a href="https://jenyakoivu.github.io/the-master-is-nearby-app/privacy.html" target="_blank" style="color:var(--accent)">политику конфиденциальности</a></span></label>'+
+      '<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--ink-dim);margin-bottom:14px;cursor:pointer"><input type="checkbox" id="c_consent" style="margin-top:2px;width:auto"> <span>Отправляя заявку, я соглашаюсь с правилами обработки данных и <a href="https://jenyakoivu.github.io/the-master-is-nearby-app/privacy.html" target="_blank" style="color:var(--accent)">политикой конфиденциальности</a></span></label>'+
       '<button class="btn primary" id="cCreateBtn" onclick="cCreate('+(inner?1:0)+')">Отправить заявку</button>';
   };
 
